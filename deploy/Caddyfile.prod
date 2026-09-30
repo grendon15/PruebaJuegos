@@ -1,0 +1,15 @@
+# ============================================================
+#  DADITO 🎲 — Reverse proxy de producción
+#  $PORT (HTTPS lo pone la plataforma) → Next.js :3000
+#  /socket.io/* → game-service :3003 (WebSockets)
+# ============================================================
+:{$PORT} {
+        @socket path /socket.io*
+        handle @socket {
+                reverse_proxy localhost:3003
+        }
+
+        handle {
+                reverse_proxy localhost:3000
+        }
+}

@@ -1,0 +1,20 @@
+# ============================================================
+#  DADITO 🎲 — Blueprint de Render
+#  1) Sube el proyecto a GitHub
+#  2) En render.com → New → Blueprint → elige el repositorio
+#  3) Render crea el servicio y te da la URL pública
+# ============================================================
+services:
+  - type: web
+    name: dadito
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      # Render te pedirá el valor al crear el Blueprint:
+      # pega la cadena de conexión de Neon (la "pooled", postgresql://...)
+      - key: GAME_DB_URL
+        sync: false
