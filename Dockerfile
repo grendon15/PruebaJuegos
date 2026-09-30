@@ -30,6 +30,14 @@ FROM node:22-bookworm-slim
 # imagen base ya trae. Crear otro UID 1000 falla (exit 4: UID en uso).
 COPY --from=oven/bun:1 /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=caddybin /usr/bin/caddy /usr/local/bin/caddy
+# La imagen oficial de caddy deja el binario con la capability
+# cap_net_bind_service (para usar :80/:443 como root). Un usuario sin
+# privilegios NO puede ejecutar binarios con file-caps (EPERM). Dadito
+# solo usa puertos altos, así que la quitamos:
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends libcap2-bin \
+ && setcap -r /usr/local/bin/caddy \
+ && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
 # Solo lo necesario para correr:
