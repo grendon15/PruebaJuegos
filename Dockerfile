@@ -26,17 +26,21 @@ FROM caddy:2 AS caddybin
 
 # ---------- Etapa 3: runtime (liviano) ----------
 FROM node:22-bookworm-slim
-# Usuario no-root (requerido por Hugging Face Spaces, buena práctica en general)
-RUN useradd -m -u 1000 user
+# Usuario no-root: reutilizamos el usuario `node` (UID 1000) que la propia
+# imagen base ya trae. Crear otro UID 1000 falla (exit 4: UID en uso).
 COPY --from=oven/bun:1 /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=caddybin /usr/bin/caddy /usr/local/bin/caddy
 WORKDIR /app
 
 # Solo lo necesario para correr:
-#  - .next/standalone → servidor Next.js compilado (incluye public/ y static)
+#  - .next/standalone → servidor Next.js compilado
 #  - mini-services    → servidor del juego con sus dependencias
 #  - deploy           → start.sh y Caddyfile.prod
 COPY --from=build /app/.next/standalone ./.next/standalone
+# El standalone NO incluye por sí solo los assets estáticos: sin esto el
+# HTML carga pero CSS/JS dan 404 (sitio sin estilos).
+COPY --from=build /app/public ./.next/standalone/public
+COPY --from=build /app/.next/static ./.next/standalone/.next/static
 COPY --from=build /app/mini-services ./mini-services
 COPY --from=build /app/deploy ./deploy
 
@@ -45,8 +49,8 @@ ENV NODE_ENV=production \
     SOCKET_PATH=/socket.io \
     PORT=8080
 
-RUN chown -R user:user /app
-USER user
+RUN chown -R node:node /app
+USER node
 
 EXPOSE 8080
 
